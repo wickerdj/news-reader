@@ -1,43 +1,50 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-	"os"
-
-	"github.com/barthr/newsapi"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
+func fileMenu() *fyne.Menu {
+	item1 := fyne.NewMenuItem("A", func() {})
+	item2 := fyne.NewMenuItem("B", func() {})
+	return fyne.NewMenu("File", item1, item2)
+}
+
+func helpMenu(a fyne.App) *fyne.Menu {
+	item1 := fyne.NewMenuItem("C", func() {})
+	item2 := fyne.NewMenuItem("D", func() { showWindow(a) })
+	return fyne.NewMenu("Help", item1, item2)
+}
+
+func showWindow(a fyne.App) {
+	w := a.NewWindow("quick test")
+	w.SetContent(widget.NewLabel("quick test"))
+	w.Resize(fyne.NewSize(200, 200))
+	w.Show()
+}
+
 func main() {
-	news_api_key := os.Getenv("NEWS_API_KEY")
+	myApp := app.New()
+	myWindow := myApp.NewWindow("Entry Widget")
 
-	c := newsapi.NewClient(news_api_key, newsapi.WithHTTPClient(http.DefaultClient))
+	content := container.NewVBox(
+		widget.NewLabel("The top row of the VBox"),
+		container.NewHBox(
+			widget.NewLabel("Label 1"),
+			widget.NewLabel("Label 2"),
+		),
+	)
 
-	sources, err := c.GetSources(context.Background(), &newsapi.SourceParameters{
-		Country: "us",
-	})
+	content.Add(widget.NewButton("Add more items", func() {
+		content.Add(widget.NewLabel("Added"))
+	}))
 
-	if err != nil {
-		panic(err)
-	}
+	mainMenu := fyne.NewMainMenu(fileMenu(), helpMenu(myApp))
+	myWindow.SetMainMenu(mainMenu)
 
-	for _, s := range sources.Sources {
-		fmt.Println(s.Name)
-
-	}
-
-	articles, err := c.GetEverything(context.Background(), &newsapi.EverythingParameters{
-		Sources:  []string{"Associated Press", "Axios"},
-		Language: "en",
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	for _, s := range articles.Articles {
-		fmt.Printf("%+v\n\n", s)
-	}
-
+	myWindow.SetContent(content)
+	myWindow.ShowAndRun()
 }
